@@ -48,7 +48,8 @@ pkg
 # For rubinius:
 #*.rbc
 
-Gemfile.lock
+# Gemfile.lock is required for Heroku...
+#Gemfile.lock
 
 # This is for RubyMine
 .idea
