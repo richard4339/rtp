@@ -1,1 +1,1 @@
-clock: bundle exec lib/rtm.rb
+clock: bundle exec ruby lib/rtm.rb
