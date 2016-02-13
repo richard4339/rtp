@@ -10,15 +10,16 @@ auth_token = ENV['AUTH_TOKEN']
 
 scheduler = Rufus::Scheduler.new
 
+
+
+# Postpone incomplete tasks due before today not marked for autocomplete
+
 scheduler.every ENV['FREQUENCY'] do
 
   client = Milkman::Client.new api_key: api_key, shared_secret: shared_secret, auth_token: auth_token
 
-# widget configuration
-
 
   filter = 'status:incomplete AND dueBefore:today AND NOT tag:autocomplete'
-  #filter = 'status:incomplete AND (dueBefore:today OR dueWithin:"1 day of today") AND NOT tag:autocomplete'
   date_format = "%m/%d/%Y"
   sort_by = "date"
   max_items = 8
@@ -65,9 +66,28 @@ scheduler.every ENV['FREQUENCY'] do
     tasks.each do |i|
       puts "#{i[:name]} #{i[:date]} ID: #{i[:id]} Series: #{i[:taskseries]} Source: #{i[:source]} List: #{i[:list_id]}"
       client.get "rtm.tasks.postpone", timeline: timeline, list_id: i[:list_id], taskseries_id: i[:taskseries], task_id: i[:id]
+
+      new_priority = "N"
+      case i[:priority]
+        when "N"
+          new_priority = "3"
+        when "3"
+          new_priority = "2"
+        else
+          new_priority = "1"
+      end
+
+      unless i[:priority] == new_priority
+        puts new_priority
+        client.get "rtm.tasks.setPriority", timeline: timeline, list_id: i[:list_id], taskseries_id: i[:taskseries], task_id: i[:id], priority: new_priority
+      end
     end
   end
 end
+
+
+
+# Postpone incomplete tasks due before now marked for autocomplete
 
 
 scheduler.every ENV['FREQUENCY'] do
@@ -78,7 +98,6 @@ scheduler.every ENV['FREQUENCY'] do
 
 
   filter = 'status:incomplete AND dueBefore:now AND tag:autocomplete'
-#filter = 'status:incomplete AND (dueBefore:today OR dueWithin:"1 day of today") AND NOT tag:autocomplete'
   date_format = "%m/%d/%Y"
   sort_by = "date"
   max_items = 8
